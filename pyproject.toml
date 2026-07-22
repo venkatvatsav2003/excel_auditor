@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-auditor"
+version = "3.0.0"
+description = "Zero-dependency CSV/Excel data quality auditing with type inference, outlier detection, and scoring"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Venkat Vatsav"},
+]
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0",
+]
+optional-dependencies = {
+    "dev": ["pytest>=7.4", "flake8>=6.1"],
+    "excel": ["openpyxl>=3.1"],
+}
+
+[project.urls]
+homepage = "https://github.com/venkatvatsav2003/excel_auditor"
+
+[project.scripts]
+data-auditor = "auditor:main"
+
+[tool.setuptools]
+packages = ["data_auditor"]
+package-dir = {"data_auditor" = "."}

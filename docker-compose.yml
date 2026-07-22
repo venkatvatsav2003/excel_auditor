@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  auditor:
+    build: .
+    volumes:
+      - ./tests/fixtures:/auditor/data:ro
+      - ./reports:/auditor/reports
+      - ./config:/auditor/config:ro
+    command: --help
