@@ -1,51 +1,58 @@
-# Excel & CSV Data Auditor — Design Document
+# Data Auditor — Design Document
 
 ## Problem Statement
-Data quality issues cost organizations millions annually. Duplicates, missing values, and inconsistent formatting silently corrupt analytics, reporting, and ML training pipelines. Most teams lack a quick, automated way to assess data health before processing.
+Data quality issues silently corrupt analytics, reporting, and ML training. Most quality checks require pandas or costly ETL tools. Teams need a zero-dependency solution that can be embedded anywhere.
 
-## Core Ideology
-Data quality should be checked before processing, not after. A lightweight, zero-dependency auditor enables teams to validate data at the pipeline's edge without complex infrastructure.
+## Design Principles
+1. **Zero external dependencies** — only Python stdlib
+2. **Column-agnostic** — works with any CSV schema
+3. **Deterministic** — same input, same output every time
+4. **Pipeline-friendly** — JSON output for automation
+5. **Human-readable** — HTML reports for stakeholders
 
 ## Architecture
 
 ```
-CSV/Excel Input
-    |
-    v
-[Parsing Layer] --> csv.DictReader / openpyxl
-    |
-    v
-[Analysis Engine]
-    |-- Duplicate Detection (Counter-based)
-    |-- Missing Value Analysis (column-wise)
-    |-- Uniqueness Analysis (cardinality)
-    |-- Length Statistics (avg, min, max)
-    |
-    v
-[Report Generator] --> Console summary (future: HTML/XLSX)
+┌─────────────┐
+│  CSV Input  │  File, stdin, recursive glob
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│  Parser     │  csv.Sniffer → Dialect detection
+│             │  csv.DictReader → Structured rows
+└──────┬──────┘
+       ▼
+┌─────────────────┐
+│  Column Profiler │  Per-column analysis
+│  ├ Type inference│
+│  ├ Missing count │
+│  ├ Unique count  │
+│  ├ Statistics    │
+│  └ Outlier detect│
+└──────┬──────────┘
+       ▼
+┌─────────────────┐
+│  Quality Scorer  │  Weighted composite score
+└──────┬──────────┘
+       ▼
+┌─────────────────┐
+│  Report Gen      │  HTML with embedded CSS
+│                  │  JSON for automation
+└─────────────────┘
 ```
 
-## Key Design Decisions
-- **Built-in `csv` module only** — avoids pandas dependency for basic audits
-- **Column-agnostic** — works with any CSV schema without configuration
-- **Deterministic output** — same input always produces same analysis
+## Data Quality Dimensions
+1. **Completeness** — ratio of non-empty values per column
+2. **Uniqueness** — absence of duplicate rows
+3. **Outlier-Free** — values within 1.5×IQR of Q1/Q3
 
-## Data Quality Dimensions Assessed
-1. **Completeness** — missing/null values per column
-2. **Uniqueness** — cardinality and duplicate rows
-3. **Consistency** — string length distribution as a proxy for format issues
+## Outlier Detection
+Uses Tukey's fences:
+- Lower bound: Q1 - 1.5 × IQR
+- Upper bound: Q3 + 1.5 × IQR
+- Values outside these bounds are flagged as outliers
 
-## Threat Model
-- **Input**: Malformed CSVs, encoding issues, injection via crafted content
-- **Mitigations**: UTF-8 encoding, field stripping, no eval/exec
-
-## Limitations & Future Work
-- Numeric outlier detection (IQR) — requires numpy or manual implementation
-- Automated report generation (HTML/PDF)
-- Schema inference and type detection
-- Integration with data pipeline tools (Airflow, dbt)
-
-## Use Cases
-- Pre-processing validation for ETL pipelines
-- Ad-hoc data exploration for analysts
-- CI/CD data quality gates in MLOps workflows
+## Limitations
+- No Excel support without openpyxl
+- String-based type inference — may misclassify mixed columns
+- No cross-column validation (e.g., referential integrity)

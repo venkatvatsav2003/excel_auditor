@@ -1,0 +1,14 @@
+audit:
+  min_completeness: 80
+  max_duplicates_pct: 10
+  outlier_threshold: 1.5
+  auto_detect: true
+  detect_dates: true
+scoring:
+  completeness_weight: 40
+  duplicate_weight: 30
+  outlier_weight: 30
+reporting:
+  default_format: both
+  include_top_values: 5
+  truncate_long_values: 100
